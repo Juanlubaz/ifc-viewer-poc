@@ -1,6 +1,7 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.110/IFCLoader.js";
+import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.110/dist/IFCLoader.js";
+
 
 // HTML
 const container = document.getElementById("viewer");
