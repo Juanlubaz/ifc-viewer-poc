@@ -3,10 +3,11 @@ import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/exampl
 import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js";
 
 const container = document.getElementById("viewer");
+const select = document.getElementById("modelSelect");
 
 // Escena
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf0f0f0);
+scene.background = new THREE.Color(0xf2f2f2);
 
 // Cámara
 const camera = new THREE.PerspectiveCamera(
@@ -38,13 +39,48 @@ await ifcLoader.ifcManager.setWasmPath(
   "https://cdn.jsdelivr.net/npm/web-ifc@0.0.46/"
 );
 
-// Cargar IFC desde el repo
-ifcLoader.load(
-  "./models/modelo.ifc",
-  (model) => scene.add(model),
-  (progress) => console.log("Cargando...", progress),
-  (error) => console.error(error)
-);
+let currentModel = null;
+
+// Cargar modelo
+function loadIFC(url) {
+  if (!url) return;
+
+  // Limpiar modelo anterior
+  if (currentModel) {
+    scene.remove(currentModel);
+  }
+
+  ifcLoader.load(
+    url,
+    (model) => {
+      currentModel = model;
+      scene.add(model);
+
+      // Centrar cámara automáticamente
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3()).length();
+      const center = box.getCenter(new THREE.Vector3());
+
+      controls.target.copy(center);
+      camera.position.set(
+        center.x + size / 2,
+        center.y + size / 2,
+        center.z + size / 2
+      );
+      controls.update();
+    },
+    undefined,
+    (error) => {
+      console.error("Error cargando IFC:", error);
+      alert("No se pudo cargar el modelo IFC");
+    }
+  );
+}
+
+// Evento selector
+select.addEventListener("change", (e) => {
+  loadIFC(e.target.value);
+});
 
 // Resize
 window.addEventListener("resize", () => {
