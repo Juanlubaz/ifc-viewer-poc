@@ -2,11 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor IFC Profesional</title>
     <style>
         body { margin: 0; overflow: hidden; background: #202023; font-family: sans-serif; }
-        #toolbar { position: absolute; top: 15px; left: 15px; z-index: 100; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        #toolbar { position: absolute; top: 15px; left: 15px; z-index: 100; background: white; padding: 15px; border-radius: 8px; }
         #viewer { width: 100vw; height: 100vh; }
     </style>
 </head>
@@ -16,6 +15,7 @@
         <input type="file" id="ifcInput" accept=".ifc">
     </div>
     <div id="viewer"></div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>
