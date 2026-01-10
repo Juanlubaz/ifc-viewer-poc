@@ -1,6 +1,6 @@
-import * as THREE from "three";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/dist/IFCLoader.js";
+import { IFCLoader } from "https://unpkg.com/three-ifc-loader@1.0.1/ifc-loader.js";
 
 // Elementos del HTML
 const container = document.getElementById("viewer");
@@ -13,12 +13,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf2f2f2);
 
 // 2. Cámara
-const camera = new THREE.PerspectiveCamera(
-  60,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 10, 10);
 
 // 3. Renderer
@@ -39,28 +34,19 @@ scene.add(light);
 
 // 6. Configuración de IFC Loader
 const ifcLoader = new IFCLoader();
-
-// Ajustamos la ruta al motor WASM para que coincida con la versión de la librería
-ifcLoader.ifcManager.setWasmPath(
-  "https://cdn.jsdelivr.net/npm/web-ifc@0.0.44/dist/"
-);
+// Esta ruta es vital para que el motor de lectura funcione
+ifcLoader.ifcManager.setWasmPath("https://unpkg.com/web-ifc@0.0.36/");
 
 let currentModel = null;
 
-// Evento de carga de archivo
 input.addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  console.log("Archivo seleccionado:", file.name);
-
-  // Limpiar modelo previo si existe
   if (currentModel) {
     scene.remove(currentModel);
-    currentModel = null;
   }
 
-  // Mostrar barra de progreso
   progressBar.value = 0;
   progressContainer.style.display = "block";
 
@@ -69,21 +55,16 @@ input.addEventListener("change", async (event) => {
   ifcLoader.load(
     url,
     (model) => {
-      console.log("IFC cargado correctamente");
       currentModel = model;
       scene.add(model);
 
-      // Centrar cámara automáticamente al modelo cargado
+      // Ajuste automático de cámara
       const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3()).length();
       const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3()).length();
 
       controls.target.copy(center);
-      camera.position.set(
-        center.x + size / 1.5,
-        center.y + size / 1.5,
-        center.z + size / 1.5
-      );
+      camera.position.set(center.x + size, center.y + size, center.z + size);
       controls.update();
 
       progressContainer.style.display = "none";
@@ -91,30 +72,25 @@ input.addEventListener("change", async (event) => {
     },
     (progress) => {
       if (progress.total) {
-        const percent = (progress.loaded / progress.total) * 100;
-        progressBar.value = percent;
+        progressBar.value = (progress.loaded / progress.total) * 100;
       }
     },
     (error) => {
-      console.error("Error cargando IFC:", error);
-      alert("Error al cargar el archivo IFC. Revisa la consola para más detalles.");
+      console.error(error);
       progressContainer.style.display = "none";
     }
   );
 });
 
-// Ajuste de ventana (Resize)
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Bucle de animación
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
-
 animate();
