@@ -2,18 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Visor IFC estable</title>
+    <title>Visor IFC Profesional</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; }
-        #toolbar { position: absolute; top: 10px; left: 10px; z-index: 10; background: white; padding: 10px; border-radius: 5px; }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; }
+        #toolbar { position: absolute; top: 15px; left: 15px; z-index: 100; background: white; padding: 15px; border-radius: 8px; }
         #viewer { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
     <div id="toolbar">
+        <label><strong>Cargar archivo IFC:</strong></label><br>
         <input type="file" id="ifcInput" accept=".ifc">
     </div>
     <div id="viewer"></div>
-    <script type="module" src="app.js"></script>
+
+    <script type="module" src="app.js?v=99"></script>
 </body>
 </html>
