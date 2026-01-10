@@ -1,10 +1,12 @@
-// VERSION 2.0 - CARGA ABSOLUTA SIN ALIAS
+// VERSIÓN DE EMERGENCIA 3.0 - CARGA DIRECTA
+console.log("Cargando Visor IFC 3.0...");
+
 import * as THREE from 'https://unpkg.com/three@0.149.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.149.0/examples/jsm/controls/OrbitControls.js';
 import { IFCLoader } from 'https://unpkg.com/three@0.149.0/examples/jsm/loaders/IFCLoader.js';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a);
+scene.background = new THREE.Color(0x202023);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 10, 10);
