@@ -5,55 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor IFC Profesional</title>
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background: #1a1a1a; 
-            font-family: sans-serif; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        
+        #viewer-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
         #toolbar { 
             position: absolute; 
-            top: 15px; 
-            left: 15px; 
+            top: 20px; 
+            left: 20px; 
             z-index: 100; 
             background: white; 
-            padding: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            min-width: 280px;
         }
-        #viewer { 
-            width: 100vw; 
-            height: 100vh; 
+        
+        #toolbar h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
         }
-        #status {
-            margin-top: 10px;
+        
+        #ifcInput {
+            width: 100%;
             padding: 8px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            font-size: 12px;
-            display: none;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
         }
-        .loading { background: #fff3cd !important; }
-        .success { background: #d4edda !important; }
-        .error { background: #f8d7da !important; }
+        
+        #ifcInput:hover {
+            border-color: #4CAF50;
+        }
+        
+        #status {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+            font-weight: 500;
+        }
+        
+        .loading { 
+            background: #fff3cd; 
+            color: #856404;
+            display: block !important;
+        }
+        
+        .success { 
+            background: #d4edda; 
+            color: #155724;
+            display: block !important;
+        }
+        
+        .error { 
+            background: #f8d7da; 
+            color: #721c24;
+            display: block !important;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
-    <div id="toolbar">
-        <label><strong>Cargar archivo IFC:</strong></label><br>
-        <input type="file" id="ifcInput" accept=".ifc">
-        <div id="status"></div>
+    <div id="viewer-container">
+        <div id="toolbar">
+            <h3>🏗️ Visor IFC</h3>
+            <input type="file" id="ifcInput" accept=".ifc">
+            <div id="status"></div>
+        </div>
+        <div id="canvas-container"></div>
     </div>
-    <div id="viewer"></div>
 
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-    
     <script type="importmap">
     {
         "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/",
-            "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.51/web-ifc-api.js"
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+            "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.53/web-ifc-api.js"
         }
     }
     </script>
@@ -61,132 +110,159 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { IFCLoader } from 'three/addons/loaders/IFCLoader.js';
+        import { IFCLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/IFCLoader.js';
 
+        const container = document.getElementById('canvas-container');
         const statusEl = document.getElementById('status');
+        const fileInput = document.getElementById('ifcInput');
         
         function showStatus(message, type = 'loading') {
             statusEl.textContent = message;
             statusEl.className = type;
             statusEl.style.display = 'block';
-            console.log(message);
+            console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
-        showStatus('Inicializando visor...', 'loading');
+        showStatus('Inicializando visor 3D...', 'loading');
 
-        // Configuración de la escena
+        // Escena
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+        scene.background = new THREE.Color(0x2c3e50);
 
+        // Cámara
         const camera = new THREE.PerspectiveCamera(
-            75, 
-            window.innerWidth / window.innerHeight, 
-            0.1, 
-            1000
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            2000
         );
-        camera.position.set(10, 10, 10);
+        camera.position.set(15, 15, 15);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true 
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById('viewer').appendChild(renderer.domElement);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
 
+        // Controles
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        
-        // Iluminación
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight1.position.set(10, 10, 5);
-        scene.add(dirLight1);
-        
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-        dirLight2.position.set(-10, 10, -5);
-        scene.add(dirLight2);
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.minDistance = 5;
+        controls.maxDistance = 500;
 
-        // Grid helper
-        const gridHelper = new THREE.GridHelper(100, 100, 0x444444, 0x222222);
+        // Luces
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(50, 50, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.camera.far = 200;
+        sunLight.shadow.camera.left = -50;
+        sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50;
+        sunLight.shadow.camera.bottom = -50;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        fillLight.position.set(-30, 30, -30);
+        scene.add(fillLight);
+
+        // Grid
+        const gridHelper = new THREE.GridHelper(200, 50, 0x555555, 0x333333);
         scene.add(gridHelper);
 
-        // Configurar IFCLoader
+        // Axes helper
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+
+        // IFC Loader
         const ifcLoader = new IFCLoader();
-        
-        // IMPORTANTE: Configurar la ruta correcta de WASM
-        ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.51/');
-        
-        // Configurar opciones del loader
-        ifcLoader.ifcManager.setupThreeMeshBVH();
+        ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.53/');
 
         let currentModel = null;
 
-        document.getElementById('ifcInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
+        // Manejador de carga de archivos
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
             if (!file) return;
-            
-            showStatus(`Cargando ${file.name}...`, 'loading');
-            
-            // Limpiar modelo anterior si existe
+
+            showStatus(`Preparando ${file.name}...`, 'loading');
+
+            // Limpiar modelo anterior
             if (currentModel) {
                 scene.remove(currentModel);
-                currentModel.geometry?.dispose();
-                currentModel.material?.dispose();
+                ifcLoader.ifcManager.dispose();
+                currentModel = null;
             }
-            
+
             const url = URL.createObjectURL(file);
-            
+
             try {
-                const model = await ifcLoader.loadAsync(
+                showStatus('Cargando archivo IFC...', 'loading');
+
+                ifcLoader.load(
                     url,
+                    (ifcModel) => {
+                        currentModel = ifcModel;
+                        scene.add(ifcModel);
+
+                        // Calcular dimensiones
+                        const box = new THREE.Box3().setFromObject(ifcModel);
+                        const center = box.getCenter(new THREE.Vector3());
+                        const size = box.getSize(new THREE.Vector3());
+
+                        // Ajustar grid
+                        gridHelper.position.y = box.min.y - 0.1;
+
+                        // Centrar controles
+                        controls.target.copy(center);
+
+                        // Posicionar cámara
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const fov = camera.fov * (Math.PI / 180);
+                        let distance = Math.abs(maxDim / Math.tan(fov / 2));
+                        distance *= 1.8;
+
+                        const direction = new THREE.Vector3(1, 0.8, 1).normalize();
+                        camera.position.copy(center).add(direction.multiplyScalar(distance));
+                        camera.lookAt(center);
+                        controls.update();
+
+                        URL.revokeObjectURL(url);
+                        
+                        showStatus(`✓ ${file.name} cargado exitosamente`, 'success');
+                        
+                        setTimeout(() => {
+                            statusEl.style.display = 'none';
+                        }, 4000);
+                    },
                     (progressEvent) => {
                         if (progressEvent.lengthComputable) {
-                            const percent = (progressEvent.loaded / progressEvent.total * 100).toFixed(1);
+                            const percent = ((progressEvent.loaded / progressEvent.total) * 100).toFixed(1);
                             showStatus(`Cargando: ${percent}%`, 'loading');
                         }
+                    },
+                    (error) => {
+                        console.error('Error al cargar IFC:', error);
+                        showStatus(`✗ Error: ${error.message || 'No se pudo cargar el archivo'}`, 'error');
+                        URL.revokeObjectURL(url);
                     }
                 );
-                
-                currentModel = model;
-                scene.add(model);
-                
-                // Centrar y ajustar cámara
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                
-                // Posicionar grid
-                gridHelper.position.y = box.min.y;
-                
-                controls.target.copy(center);
-                
-                // Calcular distancia óptima de cámara
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const fov = camera.fov * (Math.PI / 180);
-                let cameraDistance = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-                cameraDistance *= 2; // Zoom out para ver todo el modelo
-                
-                camera.position.set(
-                    center.x + cameraDistance * 0.5,
-                    center.y + cameraDistance * 0.5,
-                    center.z + cameraDistance
-                );
-                
-                camera.lookAt(center);
-                controls.update();
-                
-                // Liberar URL
-                URL.revokeObjectURL(url);
-                
-                showStatus('✓ Modelo cargado correctamente', 'success');
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 3000);
-                
+
             } catch (error) {
-                console.error('Error detallado:', error);
-                showStatus(`✗ Error: ${error.message}`, 'error');
+                console.error('Error inesperado:', error);
+                showStatus(`✗ Error inesperado: ${error.message}`, 'error');
+                URL.revokeObjectURL(url);
             }
         });
 
@@ -203,12 +279,13 @@
             controls.update();
             renderer.render(scene, camera);
         }
-        
+
         animate();
-        showStatus('✓ Visor listo', 'success');
+        
+        showStatus('✓ Visor listo. Selecciona un archivo IFC', 'success');
         setTimeout(() => {
             statusEl.style.display = 'none';
-        }, 2000);
+        }, 3000);
     </script>
 </body>
 </html>
