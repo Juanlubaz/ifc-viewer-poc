@@ -1,6 +1,5 @@
 // VERSIÓN 4.0 - TEST DE CARGA DIRECTA
 console.log("¡El archivo main.js ha sido detectado correctamente!");
-
 import * as THREE from 'https://unpkg.com/three@0.149.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.149.0/examples/jsm/controls/OrbitControls.js';
 import { IFCLoader } from 'https://unpkg.com/three@0.149.0/examples/jsm/loaders/IFCLoader.js';
