@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visor IFC POC</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #333; }
+    body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #202023; }
     #toolbar {
       position: absolute; top: 10px; left: 10px; background: white;
       padding: 15px; border-radius: 8px; z-index: 10; width: 250px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
+    input[type="file"] { width: 100%; margin-top: 10px; cursor: pointer; }
     #viewer { width: 100vw; height: 100vh; }
-    progress { width: 100%; display: none; }
+    #progressBar { width: 100%; display: none; margin-top: 10px; }
   </style>
 </head>
 <body>
 
   <div id="toolbar">
-    <label><strong>Cargar IFC:</strong></label>
+    <strong>Cargar archivo IFC:</strong>
     <input type="file" id="ifcInput" accept=".ifc" />
     <progress id="progressBar" value="0" max="100"></progress>
   </div>
@@ -25,6 +27,5 @@
   <div id="viewer"></div>
 
   <script type="module" src="main.js"></script>
-
 </body>
 </html>
