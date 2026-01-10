@@ -1,8 +1,8 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js";
+import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.110/IFCLoader.js";
 
-// HTML elements
+// HTML
 const container = document.getElementById("viewer");
 const input = document.getElementById("ifcInput");
 const progressContainer = document.getElementById("progressContainer");
@@ -36,26 +36,26 @@ const light = new THREE.DirectionalLight(0xffffff, 0.8);
 light.position.set(10, 20, 10);
 scene.add(light);
 
-// IFC Loader
+// IFC Loader (SIN await)
 const ifcLoader = new IFCLoader();
-await ifcLoader.ifcManager.setWasmPath(
-  "https://cdn.jsdelivr.net/npm/web-ifc@0.0.46/"
+ifcLoader.ifcManager.setWasmPath(
+  "https://cdn.jsdelivr.net/npm/web-ifc@0.0.38/"
 );
 
 let currentModel = null;
 
-// Cargar IFC
 input.addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Limpiar modelo anterior
+  console.log("Archivo seleccionado:", file.name);
+
+  // Limpiar modelo previo
   if (currentModel) {
     scene.remove(currentModel);
     currentModel = null;
   }
 
-  // Mostrar progreso
   progressBar.value = 0;
   progressContainer.style.display = "block";
 
@@ -64,6 +64,8 @@ input.addEventListener("change", (event) => {
   ifcLoader.load(
     url,
     (model) => {
+      console.log("IFC cargado correctamente");
+
       currentModel = model;
       scene.add(model);
 
@@ -90,7 +92,7 @@ input.addEventListener("change", (event) => {
       }
     },
     (error) => {
-      console.error(error);
+      console.error("Error cargando IFC:", error);
       alert("Error al cargar el archivo IFC");
       progressContainer.style.display = "none";
     }
@@ -104,7 +106,7 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Loop
+// Render loop
 function animate() {
   controls.update();
   renderer.render(scene, camera);
