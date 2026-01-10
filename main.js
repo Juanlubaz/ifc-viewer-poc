@@ -1,7 +1,6 @@
-// Usamos ESM.sh que resuelve las dependencias automáticamente
-import * as THREE from "https://esm.sh/three@0.152.2";
-import { OrbitControls } from "https://esm.sh/three@0.152.2/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "https://esm.sh/web-ifc-three@0.0.126";
+import * as THREE from "https://cdn.skypack.dev/three@0.135.0";
+import { OrbitControls } from "https://cdn.skypack.dev/three@0.135.0/examples/jsm/controls/OrbitControls.js";
+import { IFCLoader } from "https://cdn.skypack.dev/three-ifc-loader";
 
 // Elementos del HTML
 const container = document.getElementById("viewer");
@@ -28,16 +27,15 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 // 5. Luces
-scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-const light = new THREE.DirectionalLight(0xffffff, 0.5);
-light.position.set(10, 10, 10);
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const light = new THREE.DirectionalLight(0xffffff, 0.8);
+light.position.set(10, 20, 10);
 scene.add(light);
 
 // 6. Configuración de IFC Loader
 const ifcLoader = new IFCLoader();
-
-// IMPORTANTE: Ruta al motor WASM
-ifcLoader.ifcManager.setWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.44/dist/");
+// Usamos el motor WASM de unpkg que es muy estable para esta versión
+ifcLoader.ifcManager.setWasmPath("https://unpkg.com/web-ifc@0.0.36/");
 
 let currentModel = null;
 
@@ -47,7 +45,6 @@ input.addEventListener("change", async (event) => {
 
   if (currentModel) {
     scene.remove(currentModel);
-    currentModel = null;
   }
 
   progressBar.value = 0;
@@ -61,13 +58,13 @@ input.addEventListener("change", async (event) => {
       currentModel = model;
       scene.add(model);
 
-      // Centrado automático
+      // Encuadre automático
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3()).length();
 
       controls.target.copy(center);
-      camera.position.set(center.x + size / 1.5, center.y + size / 1.5, center.z + size / 1.5);
+      camera.position.set(center.x + size, center.y + size, center.z + size);
       controls.update();
 
       progressContainer.style.display = "none";
@@ -79,8 +76,8 @@ input.addEventListener("change", async (event) => {
       }
     },
     (error) => {
-      console.error("Error cargando el archivo:", error);
-      alert("Error al cargar el IFC. Mira la consola para detalles.");
+      console.error(error);
+      alert("Error al cargar el archivo. Revisa si es un .ifc válido.");
       progressContainer.style.display = "none";
     }
   );
