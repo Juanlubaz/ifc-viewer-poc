@@ -1,35 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor IFC Profesional</title>
-  <style>
-    body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background-color: #202023; }
-    #toolbar {
-      position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.95);
-      padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      z-index: 100; width: 250px;
-    }
-    input[type="file"] { width: 100%; margin-top: 10px; cursor: pointer; }
-    #progressContainer { margin-top: 15px; display: none; }
-    progress { width: 100%; height: 10px; }
-    #viewer { width: 100vw; height: 100vh; display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Visor IFC Final</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #202023; font-family: sans-serif; }
+        #toolbar { position: absolute; top: 10px; left: 10px; z-index: 10; background: white; padding: 15px; border-radius: 8px; }
+        #viewer { width: 100vw; height: 100vh; }
+    </style>
 </head>
 <body>
-
-  <div id="toolbar">
-    <strong>📂 Visor IFC</strong>
-    <input type="file" id="ifcInput" accept=".ifc" />
-    <div id="progressContainer">
-      <small id="progressLabel">Cargando geometría...</small>
-      <progress id="progressBar" value="0" max="100"></progress>
+    <div id="toolbar">
+        <input type="file" id="ifcInput" accept=".ifc">
     </div>
-  </div>
-
-  <div id="viewer"></div>
-
-  <script type="module" src="main.js"></script>
+    <div id="viewer"></div>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
