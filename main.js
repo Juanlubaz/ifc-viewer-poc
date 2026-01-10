@@ -41,7 +41,7 @@ scene.add(light);
 // IFC Loader (SIN await)
 const ifcLoader = new IFCLoader();
 ifcLoader.ifcManager.setWasmPath(
-  "https://cdn.jsdelivr.net/npm/web-ifc@0.0.38/"
+  "https://cdn.jsdelivr.net/npm/web-ifc@0.0.38/dist/"
 );
 
 let currentModel = null;
