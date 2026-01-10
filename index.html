@@ -5,96 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visor IFC Profesional</title>
   <style>
-    /* Reset básico para que el visor ocupe toda la pantalla */
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #ececec;
-    }
-
-    /* Panel de controles superior */
+    body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background-color: #ececec; }
     #toolbar {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      z-index: 100;
-      width: 300px;
-      border: 1px solid #ccc;
+      position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.9);
+      padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 100; width: 280px;
     }
-
-    .title-group {
-      margin-bottom: 15px;
-    }
-
-    .title-group h3 {
-      margin: 0;
-      font-size: 16px;
-      color: #333;
-    }
-
-    /* Estilo del input de archivos */
-    input[type="file"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: #f9f9f9;
-      cursor: pointer;
-    }
-
-    /* Barra de progreso */
-    #progressContainer {
-      margin-top: 20px;
-      display: none; /* Se muestra vía JS */
-    }
-
-    #progressLabel {
-      font-size: 13px;
-      color: #555;
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    progress {
-      width: 100%;
-      height: 12px;
-      border-radius: 6px;
-    }
-
-    /* Contenedor del Visor 3D */
-    #viewer {
-      width: 100vw;
-      height: 100vh;
-      display: block;
-      outline: none;
-    }
+    input[type="file"] { width: 100%; margin-top: 10px; cursor: pointer; }
+    #progressContainer { margin-top: 15px; display: none; }
+    progress { width: 100%; }
+    #viewer { width: 100vw; height: 100vh; display: block; }
   </style>
 </head>
 <body>
 
   <div id="toolbar">
-    <div class="title-group">
-      <h3>📂 Cargador de Modelos IFC</h3>
-    </div>
-    
+    <strong>📂 Cargador IFC</strong>
     <input type="file" id="ifcInput" accept=".ifc" />
-    
     <div id="progressContainer">
-      <span id="progressLabel">Leyendo geometría 3D...</span>
+      <small id="progressLabel">Cargando geometría...</small>
       <progress id="progressBar" value="0" max="100"></progress>
     </div>
   </div>
 
   <div id="viewer"></div>
 
-  <script type="module" src="main.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.149.0/build/three.module.js",
+        "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.149.0/examples/jsm/controls/OrbitControls.js",
+        "web-ifc-three": "https://unpkg.com/web-ifc-three@0.0.126/dist/IFCLoader.js"
+      }
+    }
+  </script>
 
+  <script type="module" src="main.js"></script>
 </body>
 </html>
