@@ -1,11 +1,11 @@
-// Usamos URLs completas para que el navegador resuelva los módulos sin errores
+// Importaciones con URLs completas para que el navegador no se pierda
 import * as THREE from 'https://unpkg.com/three@0.149.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.149.0/examples/jsm/controls/OrbitControls.js';
 import { IFCLoader } from 'https://unpkg.com/three@0.149.0/examples/jsm/loaders/IFCLoader.js';
 
 // 1. Escena y Cámara
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a); // Fondo oscuro profesional
+scene.background = new THREE.Color(0x1a1a1a); // Fondo oscuro para resaltar el modelo
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 10, 10);
@@ -26,11 +26,12 @@ scene.add(light);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-// 5. Cargador IFC y Motor WASM (Sincronizados)
+// 5. Cargador IFC y Motor WASM
 const ifcLoader = new IFCLoader();
+// Esta ruta es vital para que el navegador procese el archivo IFC correctamente
 ifcLoader.ifcManager.setWasmPath('https://unpkg.com/web-ifc@0.0.39/');
 
-// Evento de selección de archivo
+// 6. Lógica de carga de archivo
 document.getElementById('ifcInput').addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -60,7 +61,7 @@ function animate() {
 }
 animate();
 
-// Responsividad: Ajustar si se cambia el tamaño de la ventana
+// Ajuste si se cambia el tamaño de la ventana
 window.onresize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
