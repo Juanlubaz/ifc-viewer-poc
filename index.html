@@ -97,22 +97,14 @@
         <div id="canvas-container"></div>
     </div>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/",
-            "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.26/IFCLoader.js",
-            "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.56/web-ifc-api.js"
-        }
-    }
-    </script>
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- web-ifc desde unpkg (más confiable) -->
+    <script src="https://unpkg.com/web-ifc@0.0.36/web-ifc-api.js"></script>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { IFCLoader } from 'web-ifc-three';
-
+    <script>
         const container = document.getElementById('canvas-container');
         const statusEl = document.getElementById('status');
         const fileInput = document.getElementById('ifcInput');
@@ -124,163 +116,233 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
-        showStatus('Inicializando visor 3D...', 'loading');
-
-        // Escena
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2c3e50);
-
-        // Cámara
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            2000
-        );
-        camera.position.set(15, 15, 15);
-
-        // Renderer
-        const renderer = new THREE.WebGLRenderer({ 
-            antialias: true,
-            alpha: true 
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
-
-        // Controles
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2;
-        controls.minDistance = 5;
-        controls.maxDistance = 500;
-
-        // Luces
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
-        sunLight.position.set(50, 50, 50);
-        sunLight.castShadow = true;
-        scene.add(sunLight);
-
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        fillLight.position.set(-30, 30, -30);
-        scene.add(fillLight);
-
-        // Grid
-        const gridHelper = new THREE.GridHelper(200, 50, 0x555555, 0x333333);
-        scene.add(gridHelper);
-
-        // Axes
-        const axesHelper = new THREE.AxesHelper(10);
-        scene.add(axesHelper);
-
-        // IFC Loader con web-ifc-three
-        const ifcLoader = new IFCLoader();
-        
-        // Configurar WASM path
-        ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.56/');
-
-        let currentModel = null;
-
-        // Manejador de carga
-        fileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            showStatus(`Preparando ${file.name}...`, 'loading');
-
-            // Limpiar modelo anterior
-            if (currentModel) {
-                scene.remove(currentModel);
-                currentModel = null;
+        // Esperar a que carguen todos los scripts
+        let checkInterval = setInterval(() => {
+            if (typeof THREE !== 'undefined' && 
+                typeof THREE.OrbitControls !== 'undefined' && 
+                typeof WebIFC !== 'undefined') {
+                
+                clearInterval(checkInterval);
+                console.log('✓ Todos los scripts cargados');
+                initViewer();
             }
+        }, 100);
 
-            const url = URL.createObjectURL(file);
-
-            try {
-                showStatus('Cargando archivo IFC...', 'loading');
-
-                ifcLoader.load(
-                    url,
-                    (ifcModel) => {
-                        currentModel = ifcModel.mesh;
-                        scene.add(currentModel);
-
-                        // Calcular dimensiones
-                        const box = new THREE.Box3().setFromObject(currentModel);
-                        const center = box.getCenter(new THREE.Vector3());
-                        const size = box.getSize(new THREE.Vector3());
-
-                        // Ajustar grid
-                        gridHelper.position.y = box.min.y - 0.1;
-
-                        // Centrar controles
-                        controls.target.copy(center);
-
-                        // Posicionar cámara
-                        const maxDim = Math.max(size.x, size.y, size.z);
-                        const fov = camera.fov * (Math.PI / 180);
-                        let distance = Math.abs(maxDim / Math.tan(fov / 2));
-                        distance *= 1.8;
-
-                        const direction = new THREE.Vector3(1, 0.8, 1).normalize();
-                        camera.position.copy(center).add(direction.multiplyScalar(distance));
-                        camera.lookAt(center);
-                        controls.update();
-
-                        URL.revokeObjectURL(url);
-                        
-                        showStatus(`✓ ${file.name} cargado exitosamente`, 'success');
-                        
-                        setTimeout(() => {
-                            statusEl.style.display = 'none';
-                        }, 4000);
-                    },
-                    (progressEvent) => {
-                        if (progressEvent.lengthComputable) {
-                            const percent = ((progressEvent.loaded / progressEvent.total) * 100).toFixed(1);
-                            showStatus(`Cargando: ${percent}%`, 'loading');
-                        }
-                    },
-                    (error) => {
-                        console.error('Error al cargar IFC:', error);
-                        showStatus(`✗ Error: ${error.message || 'No se pudo cargar el archivo'}`, 'error');
-                        URL.revokeObjectURL(url);
-                    }
-                );
-
-            } catch (error) {
-                console.error('Error inesperado:', error);
-                showStatus(`✗ Error: ${error.message}`, 'error');
-                URL.revokeObjectURL(url);
-            }
-        });
-
-        // Responsive
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Loop de animación
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        animate();
-        
-        showStatus('✓ Visor listo. Selecciona un archivo IFC', 'success');
+        // Timeout de seguridad
         setTimeout(() => {
-            statusEl.style.display = 'none';
-        }, 3000);
+            if (typeof WebIFC === 'undefined') {
+                clearInterval(checkInterval);
+                showStatus('✗ Error: WebIFC no se pudo cargar', 'error');
+                console.error('WebIFC no disponible después de 10 segundos');
+            }
+        }, 10000);
+
+        function initViewer() {
+            showStatus('Inicializando visor 3D...', 'loading');
+
+            console.log('THREE disponible:', typeof THREE !== 'undefined');
+            console.log('OrbitControls disponible:', typeof THREE.OrbitControls !== 'undefined');
+            console.log('WebIFC disponible:', typeof WebIFC !== 'undefined');
+
+            // Escena
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+
+            // Cámara
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                2000
+            );
+            camera.position.set(15, 15, 15);
+
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Controles
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            controls.minDistance = 5;
+            controls.maxDistance = 500;
+
+            // Luces
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(50, 50, 50);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-30, 30, -30);
+            scene.add(fillLight);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(200, 50, 0x555555, 0x333333);
+            scene.add(gridHelper);
+
+            // Axes
+            const axesHelper = new THREE.AxesHelper(10);
+            scene.add(axesHelper);
+
+            // Variables IFC
+            let ifcAPI;
+            let currentModel = null;
+
+            async function initIFC() {
+                showStatus('Inicializando motor IFC...', 'loading');
+                try {
+                    ifcAPI = new WebIFC.IfcAPI();
+                    ifcAPI.SetWasmPath('https://unpkg.com/web-ifc@0.0.36/');
+                    await ifcAPI.Init();
+                    
+                    showStatus('✓ Visor listo. Selecciona un archivo IFC', 'success');
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+                } catch (error) {
+                    console.error('Error inicializando IFC:', error);
+                    showStatus('✗ Error: ' + error.message, 'error');
+                }
+            }
+
+            // Función para cargar IFC
+            async function loadIFC(file) {
+                if (!ifcAPI) {
+                    showStatus('✗ Motor IFC no inicializado', 'error');
+                    return;
+                }
+
+                showStatus(`Leyendo ${file.name}...`, 'loading');
+
+                // Limpiar modelo anterior
+                if (currentModel) {
+                    scene.remove(currentModel);
+                    if (currentModel.traverse) {
+                        currentModel.traverse((child) => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(m => m.dispose());
+                                } else {
+                                    child.material.dispose();
+                                }
+                            }
+                        });
+                    }
+                    currentModel = null;
+                }
+
+                try {
+                    const data = await file.arrayBuffer();
+                    const uint8Array = new Uint8Array(data);
+
+                    showStatus('Procesando geometría...', 'loading');
+
+                    const modelID = ifcAPI.OpenModel(uint8Array);
+                    const geometries = [];
+
+                    ifcAPI.StreamAllMeshes(modelID, (mesh) => {
+                        const geometry = new THREE.BufferGeometry();
+                        
+                        const positions = ifcAPI.GetGeometry(modelID, mesh.geometryExpressID);
+                        const verts = ifcAPI.GetVertexArray(positions.GetVertexData(), positions.GetVertexDataSize());
+                        const indices = ifcAPI.GetIndexArray(positions.GetIndexData(), positions.GetIndexDataSize());
+
+                        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+                        geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+                        geometry.computeVertexNormals();
+
+                        const color = mesh.color || { x: 0.8, y: 0.8, z: 0.8, w: 1 };
+                        const material = new THREE.MeshPhongMaterial({
+                            color: new THREE.Color(color.x, color.y, color.z),
+                            side: THREE.DoubleSide,
+                            transparent: color.w < 1,
+                            opacity: color.w
+                        });
+
+                        const meshObj = new THREE.Mesh(geometry, material);
+                        
+                        if (mesh.transform) {
+                            const matrix = new THREE.Matrix4();
+                            matrix.fromArray(mesh.transform);
+                            meshObj.applyMatrix4(matrix);
+                        }
+
+                        geometries.push(meshObj);
+                    });
+
+                    showStatus('Ensamblando modelo...', 'loading');
+
+                    const ifcGroup = new THREE.Group();
+                    geometries.forEach(mesh => ifcGroup.add(mesh));
+
+                    currentModel = ifcGroup;
+                    scene.add(ifcGroup);
+
+                    // Centrar
+                    const box = new THREE.Box3().setFromObject(ifcGroup);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+
+                    gridHelper.position.y = box.min.y - 0.1;
+                    controls.target.copy(center);
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const fov = camera.fov * (Math.PI / 180);
+                    let distance = Math.abs(maxDim / Math.tan(fov / 2)) * 1.8;
+
+                    const direction = new THREE.Vector3(1, 0.8, 1).normalize();
+                    camera.position.copy(center).add(direction.multiplyScalar(distance));
+                    camera.lookAt(center);
+                    controls.update();
+
+                    ifcAPI.CloseModel(modelID);
+
+                    showStatus(`✓ Cargado: ${geometries.length} elementos`, 'success');
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+
+                } catch (error) {
+                    console.error('Error cargando IFC:', error);
+                    showStatus(`✗ Error: ${error.message}`, 'error');
+                }
+            }
+
+            // Evento
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) loadIFC(file);
+            });
+
+            // Responsive
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Animación
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            // Iniciar
+            initIFC().then(() => animate());
+        }
     </script>
 </body>
 </html>
