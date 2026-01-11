@@ -100,9 +100,10 @@
     <script type="importmap">
     {
         "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-            "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.53/web-ifc-api.js"
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/",
+            "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.26/IFCLoader.js",
+            "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.56/web-ifc-api.js"
         }
     }
     </script>
@@ -110,7 +111,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { IFCLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/IFCLoader.js';
+        import { IFCLoader } from 'web-ifc-three';
 
         const container = document.getElementById('canvas-container');
         const statusEl = document.getElementById('status');
@@ -164,13 +165,6 @@
         const sunLight = new THREE.DirectionalLight(0xffffff, 1);
         sunLight.position.set(50, 50, 50);
         sunLight.castShadow = true;
-        sunLight.shadow.camera.far = 200;
-        sunLight.shadow.camera.left = -50;
-        sunLight.shadow.camera.right = 50;
-        sunLight.shadow.camera.top = 50;
-        sunLight.shadow.camera.bottom = -50;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
         scene.add(sunLight);
 
         const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
@@ -181,17 +175,19 @@
         const gridHelper = new THREE.GridHelper(200, 50, 0x555555, 0x333333);
         scene.add(gridHelper);
 
-        // Axes helper
+        // Axes
         const axesHelper = new THREE.AxesHelper(10);
         scene.add(axesHelper);
 
-        // IFC Loader
+        // IFC Loader con web-ifc-three
         const ifcLoader = new IFCLoader();
-        ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.53/');
+        
+        // Configurar WASM path
+        ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.56/');
 
         let currentModel = null;
 
-        // Manejador de carga de archivos
+        // Manejador de carga
         fileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -201,7 +197,6 @@
             // Limpiar modelo anterior
             if (currentModel) {
                 scene.remove(currentModel);
-                ifcLoader.ifcManager.dispose();
                 currentModel = null;
             }
 
@@ -213,11 +208,11 @@
                 ifcLoader.load(
                     url,
                     (ifcModel) => {
-                        currentModel = ifcModel;
-                        scene.add(ifcModel);
+                        currentModel = ifcModel.mesh;
+                        scene.add(currentModel);
 
                         // Calcular dimensiones
-                        const box = new THREE.Box3().setFromObject(ifcModel);
+                        const box = new THREE.Box3().setFromObject(currentModel);
                         const center = box.getCenter(new THREE.Vector3());
                         const size = box.getSize(new THREE.Vector3());
 
@@ -261,7 +256,7 @@
 
             } catch (error) {
                 console.error('Error inesperado:', error);
-                showStatus(`✗ Error inesperado: ${error.message}`, 'error');
+                showStatus(`✗ Error: ${error.message}`, 'error');
                 URL.revokeObjectURL(url);
             }
         });
