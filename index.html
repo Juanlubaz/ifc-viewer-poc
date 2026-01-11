@@ -145,7 +145,7 @@
                 await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js');
                 
                 showStatus('<div class="spinner"></div>Cargando motor IFC...', 'loading');
-                await loadScript('https://unpkg.com/web-ifc@0.0.34/web-ifc-api-browser.js');
+                await loadScript('https://cdn.jsdelivr.net/npm/web-ifc@0.0.34/web-ifc-api-browser.js');
                 
                 // Verificar que todo esté disponible
                 if (typeof THREE === 'undefined') throw new Error('THREE.js no disponible');
@@ -212,15 +212,15 @@
             
             const ifcAPI = new WebIFC.IfcAPI();
             
-            // CRÍTICO: Apuntar a la carpeta wasm/ local
-            ifcAPI.SetWasmPath('./wasm/');
+            // Usar jsDelivr que tiene mejor soporte CORS
+            ifcAPI.SetWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.34/');
             
             try {
                 await ifcAPI.Init();
                 console.log('✅ IFC API inicializada correctamente');
             } catch (error) {
                 console.error('❌ Error inicializando IFC API:', error);
-                showStatus('❌ Error: No se pudieron cargar los archivos WASM.<br><small>Asegúrate de que la carpeta wasm/ existe con los archivos correctos.</small>', 'error');
+                showStatus('❌ Error al inicializar motor IFC: ' + error.message, 'error');
                 return;
             }
 
