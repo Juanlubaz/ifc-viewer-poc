@@ -36,7 +36,7 @@
         }
         
         #toolbar h3 {
-            margin: 0 0  15px 0;
+            margin: 0 0 15px 0;
             color: #333;
             font-size: 18px;
         }
@@ -124,7 +124,7 @@
             statusEl.className = type;
         }
 
-        // Cargar scripts dinámicamente en orden
+        // Cargar scripts dinámicamente
         function loadScript(src) {
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
@@ -209,9 +209,20 @@
 
             // Inicializar IFC API
             showStatus('<div class="spinner"></div>Inicializando motor IFC...', 'loading');
+            
             const ifcAPI = new WebIFC.IfcAPI();
-            ifcAPI.SetWasmPath('https://unpkg.com/web-ifc@0.0.34/');
-            await ifcAPI.Init();
+            
+            // CRÍTICO: Apuntar a la carpeta wasm/ local
+            ifcAPI.SetWasmPath('./wasm/');
+            
+            try {
+                await ifcAPI.Init();
+                console.log('✅ IFC API inicializada correctamente');
+            } catch (error) {
+                console.error('❌ Error inicializando IFC API:', error);
+                showStatus('❌ Error: No se pudieron cargar los archivos WASM.<br><small>Asegúrate de que la carpeta wasm/ existe con los archivos correctos.</small>', 'error');
+                return;
+            }
 
             let currentModel = null;
 
